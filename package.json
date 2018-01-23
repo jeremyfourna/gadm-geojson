@@ -1,0 +1,24 @@
+{
+  "name": "gadm-geojson",
+  "version": "0.1.0",
+  "description": "Transform Shapefiles from GADM into geosjon file that you can use via Leaflet or other libraries",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jeremyfourna/gadm-geojson.git"
+  },
+  "author": "Jeremy Fourna <jeremyfourna@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jeremyfourna/gadm-geojson/issues"
+  },
+  "homepage": "https://github.com/jeremyfourna/gadm-geojson#readme",
+  "dependencies": {
+    "mapshaper": "^0.4.60",
+    "ramda": "^0.25.0",
+    "shelljs": "^0.8.1"
+  }
+}
