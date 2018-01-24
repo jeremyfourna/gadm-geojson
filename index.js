@@ -1,30 +1,42 @@
 const shell = require('shelljs');
 const R = require('ramda');
 
-function onlyStringType(cur) {
+function isStringType(cur) {
   return R.equals('String', R.type(cur));
 }
 
-if (!shell.which('mapshaper')) {
-  shell.echo('Sorry, this script requires mapshaper');
-  shell.exit(1);
+function cleanOutput(folderName, path) {
+  const pathAsArray = R.split('/', path);
+  const initOfPath = R.init(pathAsArray);
+  const folderAddedToPath = R.append(folderName, initOfPath);
+
+  return R.join('/', folderAddedToPath);
 }
 
+function generateGeojsonFromShp(terminal, directories) {
+  const lsResults = R.map(cur => terminal.ls(R.concat(cur, '*.shp')), directories);
+  const listOfFiles = R.map(cur => R.filter(isStringType, cur), lsResults);
 
+  if (!terminal.which('mapshaper')) {
+    terminal.echo('Sorry, this script requires mapshaper');
+    terminal.exit(1);
+  }
 
-const directory = process.argv[2];
-const outputDirectory = R.concat(directory, 'geojson');
+  R.forEach(cur => {
+    const outputDirectory = R.concat(cur, 'geojson');
+    if (!R.contains('geojson', terminal.ls(cur))) {
+      terminal.mkdir(outputDirectory);
+    } else {
+      terminal.rm(`${outputDirectory}/*.json`);
+    }
+  }, directories);
 
-if (!R.contains('geojson', shell.ls(directory))) {
-  shell.mkdir(outputDirectory);
+  R.forEach(cur => {
+    R.forEach(cur1 => {
+      const outputDirectory = cleanOutput('geojson', cur1);
+      terminal.exec(`mapshaper ${cur1} -simplify dp 10% -o format=geojson ${outputDirectory}`);
+    }, cur);
+  }, listOfFiles);
 }
 
-const lsResult = shell.ls(R.concat(directory, '*.shp'));
-const listOfFiles = R.filter(onlyStringType, lsResult);
-
-console.log(listOfFiles);
-
-
-R.forEach(cur => {
-  shell.exec(`mapshaper ${cur} -simplify dp 10% -o format=geojson ${outputDirectory}`);
-}, listOfFiles);
+generateGeojsonFromShp(shell, R.slice(2, Infinity, process.argv));
