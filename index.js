@@ -13,30 +13,82 @@ function cleanOutput(folderName, path) {
   return R.join('/', folderAddedToPath);
 }
 
-function generateGeojsonFromShp(terminal, directories) {
-  const lsResults = R.map(cur => terminal.ls(R.concat(cur, '*.shp')), directories);
-  const listOfFiles = R.map(cur => R.filter(isStringType, cur), lsResults);
-
-  if (!terminal.which('mapshaper')) {
-    terminal.echo('Sorry, this script requires mapshaper');
-    terminal.exit(1);
-  }
-
-  R.forEach(cur => {
-    const outputDirectory = R.concat(cur, 'geojson');
-    if (!R.contains('geojson', terminal.ls(cur))) {
-      terminal.mkdir(outputDirectory);
-    } else {
-      terminal.rm(`${outputDirectory}/*.json`);
-    }
-  }, directories);
-
-  R.forEach(cur => {
-    R.forEach(cur1 => {
-      const outputDirectory = cleanOutput('geojson', cur1);
-      terminal.exec(`mapshaper ${cur1} -simplify dp 10% -o format=geojson ${outputDirectory}`);
-    }, cur);
-  }, listOfFiles);
+function lengthZero(list) {
+  return R.equals(0, R.length(list));
 }
 
-generateGeojsonFromShp(shell, R.slice(2, Infinity, process.argv));
+function cleanDirectories(directories, callback) {
+  function cleanDirectory(remainingDirectories) {
+    if (lengthZero(remainingDirectories)) {
+
+      return callback(directories);
+
+    } else {
+      const dir = R.head(remainingDirectories);
+      const outputDirectory = R.concat(dir, 'geojson');
+
+      if (!R.contains('geojson', shell.ls(dir))) {
+
+        shell.mkdir(outputDirectory);
+        return cleanDirectory(R.tail(remainingDirectories));
+
+      } else {
+
+        shell.rm(R.concat(outputDirectory, '/*.json'));
+        return cleanDirectory(R.tail(remainingDirectories));
+      }
+    }
+  }
+
+  return cleanDirectory(directories);
+}
+
+function formatFiles(directories, callback = true) {
+  function formatOneDir(remainingDirectories) {
+    function formatOneFile(remainingFiles) {
+      if (lengthZero(remainingFiles)) {
+
+        return formatOneDir(R.tail(remainingDirectories));
+
+      } else {
+        const file = R.head(remainingFiles);
+        const outputDir = cleanOutput('geojson', file);
+
+        return shell.exec(
+          `mapshaper ${file} -simplify weighted keep-shapes 10% -o format=geojson ${outputDir}`,
+          function(code, stdout, stderr) {
+            return formatOneFile(R.tail(remainingFiles));
+          });
+
+      }
+    }
+
+    if (lengthZero(remainingDirectories)) {
+
+      //return callback(directories);
+      return console.log('Work done...');
+
+    } else {
+      const dir = R.head(remainingDirectories);
+      const lsResults = shell.ls(R.concat(dir, '*.shp'));
+      const listOfFiles = R.filter(isStringType, lsResults);
+
+      return formatOneFile(listOfFiles);
+
+    }
+  }
+
+  return formatOneDir(directories);
+}
+
+function generateGeojsonFromShp(directories) {
+  if (!shell.which('mapshaper')) {
+    shell.echo('Sorry, this script requires mapshaper');
+    shell.exit(1);
+  }
+
+  return cleanDirectories(directories, formatFiles);
+
+}
+
+generateGeojsonFromShp(R.drop(2, process.argv));
