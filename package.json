@@ -18,6 +18,7 @@
   "homepage": "https://github.com/jeremyfourna/gadm-geojson#readme",
   "dependencies": {
     "mapshaper": "^0.4.60",
+    "papaparse": "^4.3.6",
     "ramda": "^0.25.0",
     "shelljs": "^0.8.1"
   }
