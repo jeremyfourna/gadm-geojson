@@ -20,13 +20,14 @@ function cleanDirectories(folderName, fileFormat, directories, callback) {
       const outputDirectory = R.concat(dir, folderName);
 
       if (!R.contains(folderName, shell.ls(dir))) {
-
         shell.mkdir(outputDirectory);
+
         return cleanDirectory(R.tail(remainingDirectories));
 
       } else {
-
+        // topojson and geojson files  end in .json
         shell.rm(R.concat(outputDirectory, '/*.json'));
+
         return cleanDirectory(R.tail(remainingDirectories));
       }
     }
@@ -36,9 +37,12 @@ function cleanDirectories(folderName, fileFormat, directories, callback) {
 }
 
 // formatFiles :: (string, string,[string], function) -> function
-function formatFiles(folderName, fileFormat, directories, callback = true) {
+function formatFiles(folderName, fileFormat, directories) {
+  // formatOneDir :: [string] -> function
   function formatOneDir(remainingDirectories) {
+    // formatOneFile :: [string] -> function
     function formatOneFile(remainingFiles) {
+      console.log(remainingFiles);
       if (lengthZero(remainingFiles)) {
 
         return formatOneDir(R.tail(remainingDirectories));
@@ -55,6 +59,18 @@ function formatFiles(folderName, fileFormat, directories, callback = true) {
 
       }
     }
+    // formatAllFilesIntoOne :: [string] -> function
+    function formatAllFilesIntoOne(listOfFiles) {
+      const formatedListOfFiles = R.join(' ', listOfFiles)
+      const outputDir = changeEndPath(folderName, R.head(listOfFiles));
+      console.log(listOfFiles, formatedListOfFiles);
+
+      return shell.exec(
+        `mapshaper -i ${formatedListOfFiles} combine-files -simplify weighted keep-shapes 10% -o format=${fileFormat} ${outputDir}`,
+        function(code, stdout, stderr) {
+          return formatOneDir(R.tail(remainingDirectories));
+        });
+    }
 
     if (lengthZero(remainingDirectories)) {
 
@@ -62,12 +78,19 @@ function formatFiles(folderName, fileFormat, directories, callback = true) {
       return console.log('Work done...');
 
     } else {
-      const dir = R.head(remainingDirectories);
-      const lsResults = fileTypeInDir('shp', dir);
+      const directory = R.head(remainingDirectories);
+      const lsResults = fileTypeInDir('shp', directory);
       const listOfFiles = R.filter(isStringType, lsResults);
 
-      return formatOneFile(listOfFiles);
+      if (R.equals(fileFormat, 'topojson')) {
 
+        return formatAllFilesIntoOne(listOfFiles);
+
+      } else {
+
+        return formatOneFile(listOfFiles);
+
+      }
     }
   }
 
