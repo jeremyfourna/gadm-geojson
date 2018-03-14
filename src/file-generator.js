@@ -61,9 +61,9 @@ function formatFiles(folderName, fileFormat, directories) {
     }
     // formatAllFilesIntoOne :: [string] -> function
     function formatAllFilesIntoOne(listOfFiles) {
+      console.log(listOfFiles);
       const formatedListOfFiles = R.join(' ', listOfFiles)
       const outputDir = changeEndPath(folderName, R.head(listOfFiles));
-      console.log(listOfFiles, formatedListOfFiles);
 
       return shell.exec(
         `mapshaper -i ${formatedListOfFiles} combine-files -simplify weighted keep-shapes 10% -o format=${fileFormat} ${outputDir}`,
