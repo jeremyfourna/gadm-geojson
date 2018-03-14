@@ -7,17 +7,19 @@ const {
   lengthZero
 } = require('./utils');
 
-function cleanDirectories(directories, callback) {
+// cleanDirectories :: (string, string,[string], function) -> function
+function cleanDirectories(folderName, fileFormat, directories, callback) {
+  // cleanDirectory :: [string] -> function
   function cleanDirectory(remainingDirectories) {
     if (lengthZero(remainingDirectories)) {
 
-      return callback(directories);
+      return callback(folderName, fileFormat, directories);
 
     } else {
       const dir = R.head(remainingDirectories);
-      const outputDirectory = R.concat(dir, 'geojson');
+      const outputDirectory = R.concat(dir, folderName);
 
-      if (!R.contains('geojson', shell.ls(dir))) {
+      if (!R.contains(folderName, shell.ls(dir))) {
 
         shell.mkdir(outputDirectory);
         return cleanDirectory(R.tail(remainingDirectories));
@@ -33,7 +35,8 @@ function cleanDirectories(directories, callback) {
   return cleanDirectory(directories);
 }
 
-function formatFiles(directories, callback = true) {
+// formatFiles :: (string, string,[string], function) -> function
+function formatFiles(folderName, fileFormat, directories, callback = true) {
   function formatOneDir(remainingDirectories) {
     function formatOneFile(remainingFiles) {
       if (lengthZero(remainingFiles)) {
@@ -42,10 +45,10 @@ function formatFiles(directories, callback = true) {
 
       } else {
         const file = R.head(remainingFiles);
-        const outputDir = changeEndPath('geojson', file);
+        const outputDir = changeEndPath(folderName, file);
 
         return shell.exec(
-          `mapshaper ${file} -simplify weighted keep-shapes 10% -o format=geojson ${outputDir}`,
+          `mapshaper ${file} -simplify weighted keep-shapes 10% -o format=${fileFormat} ${outputDir}`,
           function(code, stdout, stderr) {
             return formatOneFile(R.tail(remainingFiles));
           });
@@ -71,14 +74,17 @@ function formatFiles(directories, callback = true) {
   return formatOneDir(directories);
 }
 
-function generateGeojsonFromShp(directories) {
+// generateFilesFromShp :: string -> [string] -> IO
+function generateFilesFromShp(fileFormat, directories) {
   if (!shell.which('mapshaper')) {
     shell.echo('Sorry, this script requires mapshaper');
-    shell.exit(1);
+
+    return shell.exit(1);
   }
 
-  return cleanDirectories(directories, formatFiles);
+  const folderName = fileFormat;
 
+  return cleanDirectories(folderName, fileFormat, directories, formatFiles);
 }
 
-exports.generateGeojsonFromShp = generateGeojsonFromShp;
+exports.generateFilesFromShp = R.curry(generateFilesFromShp);
