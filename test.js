@@ -1,3 +1,5 @@
+/* jshint esversion: 6 */
+
 const R = require('ramda');
 const {
   generateFilesFromShp

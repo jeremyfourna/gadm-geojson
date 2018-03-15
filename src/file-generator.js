@@ -1,41 +1,16 @@
+/* jshint esversion: 6 */
+
 const shell = require('shelljs');
 const R = require('ramda');
 const {
   changeEndPath,
+  cleanDirectories,
   fileTypeInDir,
   isStringType,
-  lengthZero
+  lengthZero,
+  mapIndexed
 } = require('./utils');
-const { getFilesForCountryLevel } = require('./map-countries');
-
-// cleanDirectories :: (string, string,[string], function) -> function
-function cleanDirectories(folderName, fileFormat, directories, callback) {
-  // cleanDirectory :: [string] -> function
-  function cleanDirectory(remainingDirectories) {
-    if (lengthZero(remainingDirectories)) {
-
-      return callback(folderName, fileFormat, directories);
-
-    } else {
-      const dir = R.head(remainingDirectories);
-      const outputDirectory = R.concat(dir, folderName);
-
-      if (!R.contains(folderName, shell.ls(dir))) {
-        shell.mkdir(outputDirectory);
-
-        return cleanDirectory(R.tail(remainingDirectories));
-
-      } else {
-        // topojson and geojson files  end in .json
-        shell.rm(R.concat(outputDirectory, '/*.json'));
-
-        return cleanDirectory(R.tail(remainingDirectories));
-      }
-    }
-  }
-
-  return cleanDirectory(directories);
-}
+const { getFilesForAllLevels } = require('./map-level');
 
 // formatFiles :: (string, string,[string], function) -> function
 function formatFiles(folderName, fileFormat, directories) {
@@ -60,35 +35,50 @@ function formatFiles(folderName, fileFormat, directories) {
 
       }
     }
-    // formatAllFilesIntoOne :: [string] -> function
-    function formatAllFilesIntoOne(listOfFiles) {
+    // formatAllFilesIntoOne :: (string, [string]) -> function
+    function formatAllFilesIntoOne(level, listOfFiles) {
       console.log('formatAllFilesIntoOne', listOfFiles);
-      const formatedListOfFiles = R.join(' ', listOfFiles)
+      const formatedListOfFiles = R.join(' ', listOfFiles);
 
-      return shell.exec(
-        `mapshaper -i ${formatedListOfFiles} combine-files -simplify weighted keep-shapes 10% -o format=${fileFormat} public/countries.json`,
-        (code, stdout, stderr) => {
-          return formatOneDir(R.tail(remainingDirectories));
-        });
+      //-filter-fields NAME_1 \
+      return shell.exec(`mapshaper \
+        -i ${formatedListOfFiles} combine-files \
+        -each "this.properties = function(properties) {\
+          function a(props) {\
+            return function(key) {\
+              return props[key] || null;\
+            };\
+          }\
+          var p = a(properties);\
+          return {\
+            id:p('ID_5') || p('ID_4') || p('ID_3') || p('ID_2') || p('ID_1') || p('ID_0'),\
+            name:p('NAME_5') || p('NAME_4') || p('NAME_3') || p('NAME_2') || p('NAME_1') || p('NAME_0'),\
+            type:p('TYPE_5') || p('TYPE_4') || p('TYPE_3') || p('TYPE_2') || p('TYPE_1') || p('TYPE_0'),\
+            iso:p('ISO')\
+          };\
+        }(this.properties)" \
+        -merge-layers \
+        -simplify weighted keep-shapes 10% \
+        -o format=${fileFormat} public/${level}.json`);
     }
 
     console.log('formatOneDir', remainingDirectories);
 
     if (lengthZero(remainingDirectories)) {
 
-      //return callback(directories);
       return console.log('Work done...');
 
     } else {
-      const directory = R.head(remainingDirectories);
-      const lsResults = fileTypeInDir('shp', directory);
-      const listOfFiles = R.filter(isStringType, lsResults);
-
       if (R.equals(fileFormat, 'topojson')) {
+        const levels = ['country', 'region', 'district', 'city'];
+        const allListOfFilesForAllAdminLevel = getFilesForAllLevels(levels, directories);
 
-        return formatAllFilesIntoOne(getFilesForCountryLevel(directories));
+        return mapIndexed((cur, index) => formatAllFilesIntoOne(R.nth(index, levels), cur), allListOfFilesForAllAdminLevel);
 
       } else {
+        const directory = R.head(remainingDirectories);
+        const lsResults = fileTypeInDir('shp', directory);
+        const listOfFiles = R.filter(isStringType, lsResults);
 
         return formatOneFile(listOfFiles);
 
@@ -96,7 +86,7 @@ function formatFiles(folderName, fileFormat, directories) {
     }
   }
 
-  console.log('formatFiles', directories);
+  console.log('formatFiles', folderName, fileFormat, directories);
 
   return formatOneDir(directories);
 }
