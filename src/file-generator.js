@@ -29,7 +29,7 @@ function formatFiles(folderName, fileFormat, directories) {
 
         return shell.exec(
           `mapshaper ${file} -simplify weighted keep-shapes 10% -o format=${fileFormat} ${outputDir}`,
-          (code, stdout, stderr) => {
+          () => {
             return formatOneFile(R.tail(remainingFiles));
           });
 

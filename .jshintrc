@@ -1,0 +1,11 @@
+{
+  "undef": true,
+  "unused": true,
+  "esversion": 6,
+  "maxdepth": 2,
+  "globals": {
+    "exports": true,
+    "require": true,
+    "console": true
+  }
+}
