@@ -1,10 +1,14 @@
 /* jshint esversion: 6 */
 
 const R = require('ramda');
-const {
-  generateFilesFromShp
-} = require('./index');
+const { transform } = require('./index');
 const { cleanNodeInput } = require('./src/utils');
 
-//generateFilesFromShp('geojson',cleanNodeInput(process.argv));
-generateFilesFromShp('topojson', cleanNodeInput(process.argv));
+const config = {
+  outputFolderName: 'topojson',
+  outputFileType: 'topojson',
+  inputFileType: 'shp'
+};
+
+//transform('geojson', cleanNodeInput(process.argv));
+transform(config, cleanNodeInput(process.argv));
