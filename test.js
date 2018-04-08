@@ -5,8 +5,8 @@ const { transform } = require('./index');
 const { cleanNodeInput } = require('./src/utils');
 
 const config = {
-  outputFolderName: 'topojson',
-  outputFileType: 'topojson',
+  outputFolderName: 'geojson',
+  outputFileType: 'geojson',
   inputFileType: 'shp'
 };
 
