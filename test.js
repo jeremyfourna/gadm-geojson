@@ -20,7 +20,3 @@ public/gadm34_XKO_shp/ public/gadm34_LVA_shp/ public/gadm34_LIE_shp/ public/gadm
 public/gadm34_MDA_shp/ public/gadm34_MCO_shp/ public/gadm34_MNE_shp/ public/gadm34_PRT_shp/ public/gadm36_ROU_shp/ public/gadm36_SMR_shp/ public/gadm36_SRB_shp/ \
 public/gadm36_SVK_shp/ public/gadm36_SVN_shp/ public/gadm36_UKR_shp/ public/gadm36_VAT_shp/ public/gadm36_TUR_shp/
 */
-
-/*
-node test.js public/BEL_adm_shp/ public/CHE_adm_shp/ public/DEU_adm_shp/ public/ESP_adm_shp/ public/FRA_adm_shp/ ITA_adm_shp/ public/CHE_adm_shp/ public/LUX_adm_shp/
-*/
