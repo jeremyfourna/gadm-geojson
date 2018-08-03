@@ -37,7 +37,7 @@ function formatFiles(folderName, fileFormat, directories) {
     }
     // formatAllFilesIntoOne :: (string, [string]) -> function
     function formatAllFilesIntoOne(level, listOfFiles) {
-      console.log('formatAllFilesIntoOne', listOfFiles);
+      console.log('   ', listOfFiles);
       const formatedListOfFiles = R.join(' ', listOfFiles);
 
       //-filter-fields NAME_1 \
@@ -51,10 +51,11 @@ function formatFiles(folderName, fileFormat, directories) {
           }\
           var p = a(properties);\
           return {\
-            id:p('ID_5') || p('ID_4') || p('ID_3') || p('ID_2') || p('ID_1') || p('ID_0'),\
-            name:p('NAME_5') || p('NAME_4') || p('NAME_3') || p('NAME_2') || p('NAME_1') || p('NAME_0'),\
-            type:p('TYPE_5') || p('TYPE_4') || p('TYPE_3') || p('TYPE_2') || p('TYPE_1') || p('TYPE_0'),\
-            iso:p('ISO')\
+            id: p('ID_5') || p('ID_4') || p('ID_3') || p('ID_2') || p('ID_1') || p('ID_0'),\
+            name: p('NAME_5') || p('NAME_4') || p('NAME_3') || p('NAME_2') || p('NAME_1') || p('NAME_0') || p('NAME_LOCAL'),\
+            type: p('TYPE_5') || p('TYPE_4') || p('TYPE_3') || p('TYPE_2') || p('TYPE_1') || p('TYPE_0') || 'Country',\
+            iso: p('ISO'),\
+            gid: p('GID_5') || p('GID_4') || p('GID_3') || p('GID_2') || p('GID_1') || p('GID_0')\
           };\
         }(this.properties)" \
         -merge-layers \
